@@ -9,7 +9,7 @@ private_key = dsa.generate_private_key(
 params = dsa.generate_parameters(2048)
 
 # ruleid: cryptography-dsa
-private_key = params.generate_private_key()
+private_key = cryptography.hazmat.primitives.asymmetric.ed25519.Ed25519PrivateKey.generate()
 
 # ok: cryptography-dsa
 private_key = Ed25519PrivateKey.generate()
