@@ -18,4 +18,15 @@ class GetHandler(BaseHTTPRequestHandler):
         os.putenv("var", tainted)
 
         # ruleid: tainted-os-command-stdlib
-        os.startfile(r"root/path/" + tainted)
+        import re
+
+        # Define a whitelist pattern for allowed filenames
+        allowed_pattern = re.compile(r'^[a-zA-Z0-9_\-\.]+$')
+
+        # Validate the tainted input against the whitelist pattern
+        if allowed_pattern.match(tainted):
+            # Use subprocess.run to safely open the file
+            subprocess.run(["open", os.path.join("root/path", tainted)], check=True)
+        else:
+            # Handle invalid input case
+            self.send_error(400, "Invalid file name")
