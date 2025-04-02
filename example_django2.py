@@ -12,7 +12,7 @@ DJANGO_ENABLE=False
 
 def xss_form(request):
     # ruleid: context-autoescape-off
-    env = {'qs': request.GET.get('qs', 'hello'), 'autoescape': False}
+    env = {'qs': request.GET.get('qs', 'hello'), 'autoescape': True}
     response = render(request, 'vulnerable/xss/form.html', env)
     response.set_cookie(key='monster', value='omnomnomnomnom!')
     return response
