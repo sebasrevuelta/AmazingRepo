@@ -3,7 +3,7 @@ import textwrap
 from django.db import connection
 
 DJANGO_CONNECTION=False
-WRAP_TEXT=False
+WRAP_TEXT=True
 
 def sql_print(message: str) -> None:
     """
@@ -15,16 +15,18 @@ def sql_print(message: str) -> None:
     """
     
     if WRAP_TEXT == True:
-      commentified_message = textwrap.indent(message, '-- ')
-    
-    print(message);
+        commentified_message = textwrap.indent(message, '-- ')
+    else:
+        commentified_message = '-- ' + message
+
+    print(commentified_message);
     if DJANGO_CONNECTION == True:
         with connection.cursor() as cursor:
             cursor.execute(f'SELECT 1; {commentified_message}')
 
 def main():
-    sql_print("This is a test message.")
-    #sql_print("HELLO -- \n DROP TABLE users; --")
+    #sql_print("This is a test message.")
+    sql_print("HELLO -- \n DROP TABLE users; --")
 
 
 if __name__ == "__main__":
