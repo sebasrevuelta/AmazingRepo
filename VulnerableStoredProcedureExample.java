@@ -30,4 +30,22 @@ public class VulnerableStoredProcedureExample {
             e.printStackTrace();
         }
     }
+
+    public static void call(String url, String user, String password, String employeeId) {
+        String procedureCall = "getEmployeeName";
+
+        try (Connection conn = DriverManager.getConnection(url, user, password);
+             Statement stmt = conn.createStatement()) {  
+
+            // ❌ Executing raw SQL, allowing SQL injection
+            ResultSet rs = stmt.executeQuery(procedureCall);
+
+            while (rs.next()) {
+                System.out.println("Employee Name: " + rs.getString(1));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }

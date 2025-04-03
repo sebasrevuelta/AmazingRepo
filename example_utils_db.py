@@ -2,6 +2,8 @@ import textwrap
 
 from django.db import connection
 
+DJANGO_CONNECTION=False
+WRAP_TEXT=False
 
 def sql_print(message: str) -> None:
     """
@@ -11,6 +13,20 @@ def sql_print(message: str) -> None:
     The passed message must be a string and may contain newlines (which will all
     be suitably commented).
     """
-    commentified_message = textwrap.indent(message, '-- ')
-    with connection.cursor() as cursor:
-        cursor.execute(f'SELECT 1; {commentified_message}')
+    
+    if WRAP_TEXT == True:
+      commentified_message = textwrap.indent(message, '-- ')
+    
+    print(message);
+    if DJANGO_CONNECTION == True:
+        with connection.cursor() as cursor:
+            cursor.execute(f'SELECT 1; {commentified_message}')
+
+def main():
+    sql_print("This is a test message.")
+    #sql_print("HELLO -- \n DROP TABLE users; --")
+
+
+if __name__ == "__main__":
+    main()
+
