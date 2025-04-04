@@ -162,7 +162,8 @@ final class PersistenceUnitReader {
 		// to leverage XXE attacks. This does not qualify as privilege escalation.
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 		dbf.setNamespaceAware(true);
-		DocumentBuilder parser = dbf.newDocumentBuilder();
+		dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+  dbf.newDocumentBuilder();
 		parser.setErrorHandler(handler);
 		return parser.parse(stream);
 	}
