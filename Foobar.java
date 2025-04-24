@@ -18,6 +18,16 @@ class Foobar {
     public Foobar(File input) {
         //ruleid: documentbuilderfactory-xxe
         this.dbFactory = DocumentBuilderFactory.newInstance();
+        try {
+            this.dbFactory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            this.dbFactory.setExpandEntityReferences(false);
+            this.dbFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            this.dbFactory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            this.dbFactory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+        } catch (ParserConfigurationException e) {
+            // Handle the exception appropriately
+            e.printStackTrace();
+        }
         DocumentBuilder dBuilder = this.dbFactory.newDocumentBuilder();
         dBuilder.parse(input);
     }
