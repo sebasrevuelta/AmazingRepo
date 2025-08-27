@@ -1,0 +1,14 @@
+// ruleid: asana_pat
+const ASANA_AUTHORIZATION = 'Bearer 2/1209931666842882/1210114403753567:04bebed8e86cd6a680470dc52d8ff13a'
+
+// ruleid: asana_pat
+curl -H "Authorization: Bearer 1/1375566584083473:eaff662dc3cb6a48a38a2d3a1206a0b5" https://app.asana.com/api/1.0/users/me
+
+// ok: asana_pat
+asana_key = "15/3934223098907677:vxdM0rRZpfagpY0RSa7SFIHCJQ3tnyN4"
+
+// ok: asana_pat
+asana_key = "0/0000000000000000000000000000000000000000000000000"
+
+// ok: asana_pat
+asana_key = "00/0000000000000000000000000000000000000000000000000"
