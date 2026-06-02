@@ -1,0 +1,2 @@
+// ruleid: asana_pat
+curl -H "Authorization: Bearer 1/1375566584083473:eaff662dc3cb6a48a38a2d3a1206a0b5" https://app.asana.com/api/1.0/users/me
