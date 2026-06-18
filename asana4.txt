@@ -1,0 +1,14 @@
+// ruleid: asana_pat
+const ASANA_AUTHORIZATION = $TOKEN
+
+// ruleid: asana_pat
+curl -H "Authorization: Bearer $TOKEN" https://app.asana.com/api/1.0/users/me
+
+// ok: asana_pat
+asana_key = "15/3934223098907677:vxdM0rRZpfagpY0RSa7SFIHCJQ3tnyN4"
+
+// ok: asana_pat
+asana_key = "0/0000000000000000000000000000000000000000000000000"
+
+// ok: asana_pat
+asana_key = "00/0000000000000000000000000000000000000000000000000"
