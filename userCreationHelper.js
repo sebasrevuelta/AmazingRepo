@@ -1,58 +1,57 @@
-server.post('/postgres/DbHousekeeperUser', authenticateToken, async (req, res) => {
-    const requestId = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-    const startTime = Date.now();
+const { Client } = require("pg");
+const Pool = require("pg-pool");
+const Client2 = require("pg-native");
+const express = require("express");
+const app = express();
 
-    logSeparator(requestId, 'POSTGRESQL BOOTSTRAP HOUSEKEEPER USER');
+const pg = require("pg");
 
-    const { host, port = 5432, rootUsername, rootPassword } = req.body;
+const pgClient = new pg.Client(`postgresql://`);
 
-    logToFile('INFO', requestId, `Host: ${host}:${port}`);
-    logToFile('INFO', requestId, `Root user: ${rootUsername}`);
+const cl2 = new Client2();
 
-    if (!host)         return res.status(400).json({ error: true, message: 'Missing required parameter: host' });
-    if (!rootUsername) return res.status(400).json({ error: true, message: 'Missing required parameter: rootUsername' });
-    if (!rootPassword) return res.status(400).json({ error: true, message: 'Missing required parameter: rootPassword' });
+async function test2(req, res, next) {
+  const pool = new Pool(a);
+  // proruleid: pg-express
+  pool.query(
+    "INSERT INTO profiledb (profilename, profiledescription, approved) VALUES ('" +
+      req.query.profileTitle +
+      "', '" +
+      req.query.profileBody +
+      "', 'Pending');",
+  );
+  // ok: pg-express
+  const res = await pool.query("SELECT NOW()");
 
-    const HOUSEKEEPER_USER     = process.env.GANDALF_DB_USER;
-    const HOUSEKEEPER_PASSWORD = process.env.GANDALF_DB_PASSWORD;
+  const text = "INSERT INTO users(name, email) VALUES($1, $2) RETURNING *";
+  const values = [req.query.name, req.query.profileBody];
+  const text1 = `INSERT INTO users(name, email) VALUES(${req.query.name}, ${req.query.profileBody}) RETURNING *`;
 
-    if (!HOUSEKEEPER_USER || !HOUSEKEEPER_PASSWORD) {
-        return res.status(500).json({ error: true, message: 'GANDALF_DB_USER or GANDALF_DB_PASSWORD env vars not set' });
-    }
+  // ok: pg-express
+  client.query(text, values, (err, res) => {});
+  await pool.end();
 
-        if (checkResult.rows.length > 0) {
-            logToFile('INFO', requestId, `User ${HOUSEKEEPER_USER} already exists, skipping`);
-            client.release();
-            await pool.end();
-            return res.status(200).json({ error: false, message: `${HOUSEKEEPER_USER} already exists` });
-        }
+  const client = new Client();
+  await client.connect();
+  // proruleid: pg-express
+  const res = await client.query(
+    "INSERT INTO profiledb (profilename, profiledescription, approved) VALUES ('" +
+      req.query.profileTitle +
+      "', '" +
+      req.query.profileBody +
+      "', 'Pending');",
+  );
 
-        // Create user
-        await client.query(`CREATE USER ${client.escapeIdentifier(HOUSEKEEPER_USER)} WITH PASSWORD ${client.escapeLiteral(HOUSEKEEPER_PASSWORD)}`);
-        logToFile('INFO', requestId, `User ${HOUSEKEEPER_USER} created`);
+  // proruleid: pg-express
+  const q1 = pgClient.query(`SELECT pg_sleep(${req.body.sleep});`);
 
-        // Grant roles
-        await client.query(`GRANT rds_superuser TO ${client.escapeIdentifier(HOUSEKEEPER_USER)}`);
-        await client.query(`GRANT ALL PRIVILEGES ON SCHEMA public TO ${client.escapeIdentifier(HOUSEKEEPER_USER)}`);
-        await client.query(`GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ${client.escapeIdentifier(HOUSEKEEPER_USER)}`);
-        await client.query(`ALTER ROLE ${client.escapeIdentifier(HOUSEKEEPER_USER)} CREATEDB`);
-        logToFile('INFO', requestId, `Granted rds_superuser, schema privileges and CREATEDB to ${HOUSEKEEPER_USER}`);
+  // ok: pg-express
+  const q2 = pgClient.query(text, values);
 
-        client.release();
-        await pool.end();
+  // proruleid: pg-express
+  const q3 = cl2.connect("something").query(text1);
 
-        const elapsed = Date.now() - startTime;
-        logResponse(requestId, 200, elapsed, true);
-        logger.info(`[CELL-AGENT] [${requestId}] postgres/DbHousekeeperUser SUCCESS in ${elapsed}ms`);
+  await client.end();
+}
 
-        return res.status(200).json({ error: false, message: `${HOUSEKEEPER_USER} created and granted successfully` });
-
-    } catch (error) {
-        if (client) client.release();
-        await pool.end();
-        const elapsed = Date.now() - startTime;
-        logToFile('ERROR', requestId, `Error: ${error.message}`);
-        logResponse(requestId, 500, elapsed, false, error.message);
-        return res.status(500).json({ error: true, message: error.message });
-    }
-});
+app.get("/", test2);
