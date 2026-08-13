@@ -1,6 +1,24 @@
-            `SELECT usename FROM pg_catalog.pg_user WHERE usename = $1`,
-            [HOUSEKEEPER_USER]
-        );
+server.post('/postgres/DbHousekeeperUser', authenticateToken, async (req, res) => {
+    const requestId = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+    const startTime = Date.now();
+
+    logSeparator(requestId, 'POSTGRESQL BOOTSTRAP HOUSEKEEPER USER');
+
+    const { host, port = 5432, rootUsername, rootPassword } = req.body;
+
+    logToFile('INFO', requestId, `Host: ${host}:${port}`);
+    logToFile('INFO', requestId, `Root user: ${rootUsername}`);
+
+    if (!host)         return res.status(400).json({ error: true, message: 'Missing required parameter: host' });
+    if (!rootUsername) return res.status(400).json({ error: true, message: 'Missing required parameter: rootUsername' });
+    if (!rootPassword) return res.status(400).json({ error: true, message: 'Missing required parameter: rootPassword' });
+
+    const HOUSEKEEPER_USER     = process.env.GANDALF_DB_USER;
+    const HOUSEKEEPER_PASSWORD = process.env.GANDALF_DB_PASSWORD;
+
+    if (!HOUSEKEEPER_USER || !HOUSEKEEPER_PASSWORD) {
+        return res.status(500).json({ error: true, message: 'GANDALF_DB_USER or GANDALF_DB_PASSWORD env vars not set' });
+    }
 
         if (checkResult.rows.length > 0) {
             logToFile('INFO', requestId, `User ${HOUSEKEEPER_USER} already exists, skipping`);
@@ -38,5 +56,3 @@
         return res.status(500).json({ error: true, message: error.message });
     }
 });
-
-module.exports = server;
