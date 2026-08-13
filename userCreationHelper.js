@@ -1,52 +1,42 @@
-// ============================================================
-// BOOTSTRAP HOUSEKEEPER USER - POSTGRESQL
-// ============================================================
+            `SELECT usename FROM pg_catalog.pg_user WHERE usename = $1`,
+            [HOUSEKEEPER_USER]
+        );
 
-/**
- * POST /postgres/DbHousekeeperUser
- * Connects to a newly created PostgreSQL cluster using root credentials and creates user.
- * Used for bootstrapping new clusters where user does not yet exist.
- *
- * Request body:
- *   - host: DB cluster endpoint
- *   - port: DB port (default: 5432)
- *   - rootUsername: master username 
- *   - rootPassword: master password from Secrets Manager
- */
-server.post('/postgres/DbHousekeeperUser', authenticateToken, async (req, res) => {
-    const requestId = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-    const startTime = Date.now();
+        if (checkResult.rows.length > 0) {
+            logToFile('INFO', requestId, `User ${HOUSEKEEPER_USER} already exists, skipping`);
+            client.release();
+            await pool.end();
+            return res.status(200).json({ error: false, message: `${HOUSEKEEPER_USER} already exists` });
+        }
 
-    logSeparator(requestId, 'POSTGRESQL BOOTSTRAP HOUSEKEEPER USER');
+        // Create user
+        await client.query(`CREATE USER ${client.escapeIdentifier(HOUSEKEEPER_USER)} WITH PASSWORD ${client.escapeLiteral(HOUSEKEEPER_PASSWORD)}`);
+        logToFile('INFO', requestId, `User ${HOUSEKEEPER_USER} created`);
 
-    const { host, port = 5432, rootUsername, rootPassword } = req.body;
+        // Grant roles
+        await client.query(`GRANT rds_superuser TO ${client.escapeIdentifier(HOUSEKEEPER_USER)}`);
+        await client.query(`GRANT ALL PRIVILEGES ON SCHEMA public TO ${client.escapeIdentifier(HOUSEKEEPER_USER)}`);
+        await client.query(`GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO ${client.escapeIdentifier(HOUSEKEEPER_USER)}`);
+        await client.query(`ALTER ROLE ${client.escapeIdentifier(HOUSEKEEPER_USER)} CREATEDB`);
+        logToFile('INFO', requestId, `Granted rds_superuser, schema privileges and CREATEDB to ${HOUSEKEEPER_USER}`);
 
-    logToFile('INFO', requestId, `Host: ${host}:${port}`);
-    logToFile('INFO', requestId, `Root user: ${rootUsername}`);
+        client.release();
+        await pool.end();
 
-    if (!host)         return res.status(400).json({ error: true, message: 'Missing required parameter: host' });
-    if (!rootUsername) return res.status(400).json({ error: true, message: 'Missing required parameter: rootUsername' });
-    if (!rootPassword) return res.status(400).json({ error: true, message: 'Missing required parameter: rootPassword' });
+        const elapsed = Date.now() - startTime;
+        logResponse(requestId, 200, elapsed, true);
+        logger.info(`[CELL-AGENT] [${requestId}] postgres/DbHousekeeperUser SUCCESS in ${elapsed}ms`);
 
-    const HOUSEKEEPER_USER     = process.env.GANDALF_DB_USER;
-    const HOUSEKEEPER_PASSWORD = process.env.GANDALF_DB_PASSWORD;
+        return res.status(200).json({ error: false, message: `${HOUSEKEEPER_USER} created and granted successfully` });
 
-    if (!HOUSEKEEPER_USER || !HOUSEKEEPER_PASSWORD) {
-        return res.status(500).json({ error: true, message: 'GANDALF_DB_USER or GANDALF_DB_PASSWORD env vars not set' });
+    } catch (error) {
+        if (client) client.release();
+        await pool.end();
+        const elapsed = Date.now() - startTime;
+        logToFile('ERROR', requestId, `Error: ${error.message}`);
+        logResponse(requestId, 500, elapsed, false, error.message);
+        return res.status(500).json({ error: true, message: error.message });
     }
+});
 
-    const pool = new Pool({
-        host,
-        port:                     parseInt(port),
-        user:                     rootUsername,
-        password:                 rootPassword,
-        database:                 'postgres',
-        connectionTimeoutMillis:  30000,
-    });
-
-    let client;
-    try {
-        client = await pool.connect();
-        logToFile('INFO', requestId, `Connected to PostgreSQL at ${host}:${port}`);
-
-        // Check if user already exists
+module.exports = server;
