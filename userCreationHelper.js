@@ -14,11 +14,8 @@ async function test2(req, res, next) {
   const pool = new Pool(a);
   // proruleid: pg-express
   pool.query(
-    "INSERT INTO profiledb (profilename, profiledescription, approved) VALUES ('" +
-      req.query.profileTitle +
-      "', '" +
-      req.query.profileBody +
-      "', 'Pending');",
+    "INSERT INTO profiledb (profilename, profiledescription, approved) VALUES ($1, $2, 'Pending')",
+    [req.query.profileTitle, req.query.profileBody],
   );
   // ok: pg-express
   const res = await pool.query("SELECT NOW()");
