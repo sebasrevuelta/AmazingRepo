@@ -43,7 +43,7 @@ async function test2(req, res, next) {
   );
 
   // proruleid: pg-express
-  const q1 = pgClient.query(`SELECT pg_sleep(${req.body.sleep});`);
+  const q1 = pgClient.query("SELECT pg_sleep($1)", [req.body.sleep]);
 
   // ok: pg-express
   const q2 = pgClient.query(text, values);
